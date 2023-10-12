@@ -73,7 +73,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Author
 
-- [Your Name](https://github.com/your-username)
+- Shahbaz Riaz Abasi (https://github.com/shahbazabbasi414)
 
 Feel free to contribute and improve this project by submitting issues and pull requests. Happy email extracting!
 ```
