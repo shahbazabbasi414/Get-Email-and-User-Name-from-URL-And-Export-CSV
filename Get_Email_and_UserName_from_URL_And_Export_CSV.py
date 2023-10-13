@@ -2,74 +2,80 @@ import csv
 import requests
 import re
 import os
-import time
-import tkinter as tk
-from tkinter import Entry, Label, Button, Frame
+from PyQt5 import QtWidgets, QtGui
 
-def extract_data(url, output_filename):
-    response = requests.get(url)
+class EmailExtractorApp(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
 
-    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b'
-    emails = re.findall(email_pattern, response.text)
+    def initUI(self):
+        self.setGeometry(100, 100, 800, 400)
+        self.setWindowTitle('Email Extractor')
 
-    unique_emails = list(set(emails))
+        layout = QtWidgets.QVBoxLayout()
 
-    modified_data = []
+        url_label = QtWidgets.QLabel('Enter the website URL:')
+        self.url_entry = QtWidgets.QLineEdit()
+        layout.addWidget(url_label)
+        layout.addWidget(self.url_entry)
 
-    for email in unique_emails:
-        email_without_numeric = re.sub(r'\d+', '', email)
-        parts = email_without_numeric.split('@')
+        output_label = QtWidgets.QLabel('Enter the output filename (without extension):')
+        self.output_entry = QtWidgets.QLineEdit()
+        layout.addWidget(output_label)
+        layout.addWidget(self.output_entry)
 
-        if len(parts) == 2:
-            email_without_domain = parts[0]
-            modified_data.append([email, email_without_domain])
+        extract_button = QtWidgets.QPushButton('Extract Emails')
+        extract_button.clicked.connect(self.extract_and_display)
+        layout.addWidget(extract_button)
 
-    download_folder = os.path.join(os.path.expanduser("~"), "Downloads")
-    output_path = os.path.join(download_folder, f'{output_filename}.csv')
+        self.status_label = QtWidgets.QLabel('')
+        layout.addWidget(self.status_label)
 
-    with open(output_path, 'a', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        if csvfile.tell() == 0:
-            writer.writerow(['Email', 'Modified Name'])
-        writer.writerows(modified_data)
+        self.setLayout(layout)
 
-    print(f'Emails and modified names extracted and saved to {output_path}')
+    def extract_data(self, url, output_filename):
+        response = requests.get(url)
+        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b'
+        emails = re.findall(email_pattern, response.text)
+        unique_emails = list(set(emails))
 
-    return modified_data
+        modified_data = []
 
-def extract_and_display():
-    website_url = website_url_entry.get()
-    output_filename = output_filename_entry.get()
-    extracted_data = extract_data(website_url, output_filename)
+        for email in unique_emails:
+            email_without_numeric = re.sub(r'\d+', '', email)
+            parts = email_without_numeric.split('@')
 
-app = tk.Tk()
-app.title("Exterct Emails Form any URL")
-app.geometry("1000x600")  
-app.configure(bg="black")
+            if len(parts) == 2:
+                email_without_domain = parts[0]
+                modified_data.append([email, email_without_domain])
 
-form_frame = Frame(app, bg="red") 
-form_frame.pack(pady=20)
+        download_folder = os.path.expanduser("~") + "/Downloads"
+        output_path = os.path.join(download_folder, output_filename + '.csv')
 
-website_url_label = Label(form_frame, text="Enter the website URL:", bg="black", fg="white")
-website_url_label.grid(row=0, column=0, padx=10, pady=10)
-website_url_entry = Entry(form_frame)
-website_url_entry.grid(row=0, column=1, padx=10, pady=10)
+        with open(output_path, 'a', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            if csvfile.tell() == 0:
+                writer.writerow(['Email', 'Modified Name'])
+            writer.writerows(modified_data)
 
-output_filename_label = Label(form_frame, text="Enter the output filename (without extension):", bg="black", fg="white")
-output_filename_label.grid(row=1, column=0, padx=10, pady=10)
-output_filename_entry = Entry(form_frame)
-output_filename_entry.grid(row=1, column=1, padx=10, pady=10)
+        return output_path
 
-extract_button = Button(form_frame, text="Extract Emails", command=extract_and_display, bg="black", fg="white")
-extract_button.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
+    def extract_and_display(self):
+        website_url = self.url_entry.text()
+        output_filename = self.output_entry.text()
 
-Show_comment =Button(form_frame, text="Important Notice ! ", bg="black", fg="Red")
-Show_comment.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+        if website_url and output_filename:
+            output_path = self.extract_data(website_url, output_filename)
+            self.status_label.setText(f'Emails and modified names extracted and saved to {output_path}')
+        else:
+            self.status_label.setText('Please enter a valid URL and output filename.')
 
-Show_comment =Button(form_frame, text="File name Will Change every time If you Not Change your Emails Stores Same File For Multipul URLS", bg="black", fg="Red")
-Show_comment.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
+def main():
+    app = QtWidgets.QApplication([])
+    window = EmailExtractorApp()
+    window.show()
+    app.exec_()
 
-Show_comment =Button(form_frame, text="open a Download Foler and get your Emails", bg="black", fg="Red")
-Show_comment.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
-
-app.mainloop()
+if __name__ == '__main__':
+    main()
